@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const dotEnv = require("dotenv").config()
+const dotEnv = require("dotenv").config();
+const bcryptjs = require("bcryptjs");
 
 const mongodb = require("mongodb");
 const mongoClient = mongodb.MongoClient;
@@ -154,6 +155,36 @@ app.delete("/user/:id", async (req, res) => {
     await connection.close();
 
     res.json(user);
+  } catch (error) {
+    res.status(500).json({
+      message: "Something went wrong!",
+    });
+  }
+});
+
+app.post("/register", async (req, res) => {
+  try {
+    // Step 1 : Connect the database
+    const connection = await mongoClient.connect(URL);
+
+    // Step 2 : Select the DB
+    const db = connection.db(DB_NAME);
+
+    // Step 3 : Select the Collection
+    const collection = db.collection("login_users");
+
+    const salt = bcryptjs.genSaltSync(10);
+    const hash = bcryptjs.hashSync(req.body.password, salt);
+    req.body.password = hash;
+
+    await collection.insertOne(req.body);
+
+    res.json({
+      message: "User Registered!",
+    });
+
+    // Step 5 : Close the connection
+    await connection.close();
   } catch (error) {
     res.status(500).json({
       message: "Something went wrong!",
