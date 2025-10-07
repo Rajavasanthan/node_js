@@ -13,7 +13,7 @@ const DB_NAME = "fsd31";
 // Midleware
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://gilded-tapioca-41b421.netlify.app",
   })
 );
 
