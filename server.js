@@ -1,12 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const dotEnv = require("dotenv").config()
 
 const mongodb = require("mongodb");
 const mongoClient = mongodb.MongoClient;
 const ObjectId = mongodb.ObjectId;
 
-const URL = "mongodb://localhost:27017";
+const URL = process.env.DB;
 const DB_NAME = "fsd31";
 
 // Midleware
