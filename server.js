@@ -5,12 +5,15 @@ const dotEnv = require("dotenv").config();
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const mongodb = require("mongodb");
-const mongoClient = mongodb.MongoClient;
-const ObjectId = mongodb.ObjectId;
+const mongoose = require("mongoose");
+const { User } = require("./models/user");
+mongoose.connect(process.env.DB);
+// const mongodb = require("mongodb");
+// const mongoClient = mongodb.MongoClient;
+// const ObjectId = mongodb.ObjectId;
 
-const URL = process.env.DB;
-const DB_NAME = "fsd31";
+// const URL = process.env.DB;
+// const DB_NAME = "fsd31";
 
 // Midleware
 app.use(
@@ -61,48 +64,68 @@ function authenticate(req, res, next) {
   }
 }
 
-app.get("/user", authenticate, async (req, res) => {
-  // Step 1 : Connect the database
-  const connection = await mongoClient.connect(URL);
+app.get("/user", async (req, res) => {
+  try {
+    const users = await User.find({});
+    res.json(users);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Something went wrong!",
+    });
+  }
+  // // Step 1 : Connect the database
+  // const connection = await mongoClient.connect(URL);
 
-  // Step 2 : Select the DB
-  const db = connection.db(DB_NAME);
+  // // Step 2 : Select the DB
+  // const db = connection.db(DB_NAME);
 
-  // Step 3 : Select the Collection
-  const collection = db.collection("users");
+  // // Step 3 : Select the Collection
+  // const collection = db.collection("users");
 
-  // Step 4 : Do the operation
-  const users = await collection.find({}).toArray();
+  // // Step 4 : Do the operation
+  // const users = await collection.find({}).toArray();
 
-  // Mongodb db will return the cursor data of the document. It will not return
-  // original data. To convert Cursor to JSON we use .toArray();
+  // // Mongodb db will return the cursor data of the document. It will not return
+  // // original data. To convert Cursor to JSON we use .toArray();
 
-  // Step 5 : Close the connection
-  await connection.close();
+  // // Step 5 : Close the connection
+  // await connection.close();
 
-  res.json(users);
+  // res.json(users);
 });
 
-app.post("/user", authenticate, async (req, res) => {
+app.post("/user", async (req, res) => {
   try {
-    // Step 1 : Connect the database
-    const connection = await mongoClient.connect(URL);
+    const user = new User({
+      name: req.body.name,
+      email: req.body.email,
+    });
 
-    // Step 2 : Select the DB
-    const db = connection.db(DB_NAME);
-
-    // Step 3 : Select the Collection
-    const collection = db.collection("users");
-
-    // Step 4 : Do the operation
-    const user = await collection.insertOne(req.body);
-
-    // Step 5 : Close the connection
-    await connection.close();
+    await user.save();
 
     res.json({
-      _id: user.insertedId,
+      message: "User Created",
     });
+
+    // // Step 1 : Connect the database
+    // const connection = await mongoClient.connect(URL);
+
+    // // Step 2 : Select the DB
+    // const db = connection.db(DB_NAME);
+
+    // // Step 3 : Select the Collection
+    // const collection = db.collection("users");
+
+    // // Step 4 : Do the operation
+    // const user = await collection.insertOne(req.body);
+
+    // // Step 5 : Close the connection
+    // await connection.close();
+
+    // res.json({
+    //   _id: user.insertedId,
+    // });
   } catch (error) {
     console.log(error);
   }
@@ -256,7 +279,7 @@ app.post("/login", async (req, res) => {
     // Generate Token
 
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1m",
+      expiresIn: "5h",
     });
     res.json({
       token,
