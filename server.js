@@ -83,7 +83,7 @@ app.get("/user", authenticate, async (req, res) => {
   res.json(users);
 });
 
-app.post("/user",authenticate, async (req, res) => {
+app.post("/user", authenticate, async (req, res) => {
   try {
     // Step 1 : Connect the database
     const connection = await mongoClient.connect(URL);
@@ -114,7 +114,7 @@ app.post("/user",authenticate, async (req, res) => {
   // });
 });
 
-app.get("/user/:id",authenticate, async (req, res) => {
+app.get("/user/:id", authenticate, async (req, res) => {
   try {
     // Step 1 : Connect the database
     const connection = await mongoClient.connect(URL);
@@ -137,7 +137,7 @@ app.get("/user/:id",authenticate, async (req, res) => {
   }
 });
 
-app.put("/user/:id",authenticate, async (req, res) => {
+app.put("/user/:id", authenticate, async (req, res) => {
   try {
     // Step 1 : Connect the database
     const connection = await mongoClient.connect(URL);
@@ -163,7 +163,7 @@ app.put("/user/:id",authenticate, async (req, res) => {
   }
 });
 
-app.delete("/user/:id",authenticate, async (req, res) => {
+app.delete("/user/:id", authenticate, async (req, res) => {
   try {
     // Step 1 : Connect the database
     const connection = await mongoClient.connect(URL);
@@ -238,7 +238,7 @@ app.post("/login", async (req, res) => {
 
     if (!user) {
       res.status(404).json({
-        message: "User not found",
+        message: "Email/Password Incorect",
       });
     }
 
@@ -249,7 +249,7 @@ app.post("/login", async (req, res) => {
 
     if (!passwordCompare) {
       res.status(401).json({
-        message: "Password Wrong",
+        message: "Email/Password Incorect",
       });
     }
 
