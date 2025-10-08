@@ -3,6 +3,7 @@ const cors = require("cors");
 const app = express();
 const dotEnv = require("dotenv").config();
 const bcryptjs = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const mongodb = require("mongodb");
 const mongoClient = mongodb.MongoClient;
@@ -33,7 +34,34 @@ let users = [
   },
 ];
 
-app.get("/user", async (req, res) => {
+function authenticate(req, res, next) {
+  console.log(req.headers);
+  if (!req.headers.authorization) {
+    res.status(401).json({
+      message: "Not Authorized",
+    });
+  }
+
+  try {
+    const decode = jwt.verify(
+      req.headers.authorization,
+      process.env.JWT_SECRET
+    );
+    if (decode) {
+      next();
+    } else {
+      res.status(401).json({
+        message: "Not Authorized",
+      });
+    }
+  } catch (error) {
+    res.status(401).json({
+      message: "Not Authorized",
+    });
+  }
+}
+
+app.get("/user", authenticate, async (req, res) => {
   // Step 1 : Connect the database
   const connection = await mongoClient.connect(URL);
 
@@ -55,7 +83,7 @@ app.get("/user", async (req, res) => {
   res.json(users);
 });
 
-app.post("/user", async (req, res) => {
+app.post("/user",authenticate, async (req, res) => {
   try {
     // Step 1 : Connect the database
     const connection = await mongoClient.connect(URL);
@@ -86,7 +114,7 @@ app.post("/user", async (req, res) => {
   // });
 });
 
-app.get("/user/:id", async (req, res) => {
+app.get("/user/:id",authenticate, async (req, res) => {
   try {
     // Step 1 : Connect the database
     const connection = await mongoClient.connect(URL);
@@ -109,7 +137,7 @@ app.get("/user/:id", async (req, res) => {
   }
 });
 
-app.put("/user/:id", async (req, res) => {
+app.put("/user/:id",authenticate, async (req, res) => {
   try {
     // Step 1 : Connect the database
     const connection = await mongoClient.connect(URL);
@@ -135,7 +163,7 @@ app.put("/user/:id", async (req, res) => {
   }
 });
 
-app.delete("/user/:id", async (req, res) => {
+app.delete("/user/:id",authenticate, async (req, res) => {
   try {
     // Step 1 : Connect the database
     const connection = await mongoClient.connect(URL);
@@ -185,6 +213,54 @@ app.post("/register", async (req, res) => {
 
     // Step 5 : Close the connection
     await connection.close();
+  } catch (error) {
+    res.status(500).json({
+      message: "Something went wrong!",
+    });
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    // Step 1 : Connect the database
+    const connection = await mongoClient.connect(URL);
+
+    // Step 2 : Select the DB
+    const db = connection.db(DB_NAME);
+
+    // Step 3 : Select the Collection
+    const collection = db.collection("login_users");
+
+    const user = await collection.findOne({ email: req.body.email });
+
+    // Step 5 : Close the connection
+    await connection.close();
+
+    if (!user) {
+      res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const passwordCompare = bcryptjs.compareSync(
+      req.body.password,
+      user.password
+    );
+
+    if (!passwordCompare) {
+      res.status(401).json({
+        message: "Password Wrong",
+      });
+    }
+
+    // Generate Token
+
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1m",
+    });
+    res.json({
+      token,
+    });
   } catch (error) {
     res.status(500).json({
       message: "Something went wrong!",
